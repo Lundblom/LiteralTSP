@@ -2,7 +2,7 @@
 
 int main()
 {
-	std::cout << "Bajskorv!" << std::endl;
+	std::cout << "Dijkstra's algorithm" << std::endl;
 
 	return 1;
 }
