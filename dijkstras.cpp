@@ -9,6 +9,9 @@ namespace pathfinding
 
 	#define PATH_INFINITY 1000000
 
+	//All location offsets from the current node that we check
+	static const std::vector<std::pair<int, int> >locations = {{0,-1}, {0, 1}, {-1, 0}, {1, 0}};
+
 	struct Node
 	{
 		int length;
@@ -68,8 +71,7 @@ namespace pathfinding
 				break;
 			}
 
-			//All location offsets from the current node that we check
-			std::vector<std::pair<int, int> >locations = {{0,-1}, {0, 1}, {-1, 0}, {1, 0}};
+			
 
 			for(int i = 0; i < locations.size(); ++i)
 			{
