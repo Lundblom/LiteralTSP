@@ -9,15 +9,17 @@
 namespace pathfinding 
 {
 
-	#define PATH_INFINITY 1000000
-
-	//All location offsets from the current node that we check
-	static const std::vector<std::pair<int, int> >locations = {{0,-1}, {0, 1}, {-1, 0}, {1, 0}};
-
-	std::stack<Node*> dijkstras(std::vector<std::vector<Node*> >& g, std::pair<int, int> start, std::pair<int, int> end)
+	std::stack<Node*> a_star(std::vector<std::vector<Node*> >& g, std::pair<int, int> start, std::pair<int, int> end, double heuristic_coefficient)
 	{
 		std::vector<std::vector<int> > distance(g.size(), std::vector<int>(g.size(), PATH_INFINITY));
 		std::vector<std::vector<Node*> > previous(g.size(), std::vector<Node*>(g.size(), NULL));
+
+		Node* end_node = g[end.first][end.second];
+
+		if(heuristic_coefficient < 0)
+		{
+			heuristic_coefficient = 0;
+		}
 
 		//Tells the queue how to sort the elements
 		auto cmp = [](std::pair<Node*, int> left, std::pair<Node*, int> right) { return left.second > right.second;};
@@ -79,7 +81,7 @@ namespace pathfinding
 					continue;
 				}
 
-				int a = distance[u->Position().first][u->Position().second] + v->Length();
+				int a = distance[u->Position().first][u->Position().second] + v->Length() + v->StraightDistance(end_node) * heuristic_coefficient;
 				
 				//If this path is shorter than the one we are currently on
 				if(a < distance[x][y])

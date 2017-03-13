@@ -10,11 +10,11 @@ echo $SIDE
 
 
 while(( COUNTER < SIZE )); do
-	if(( RANDOM % 30 < 28))
+	if(( RANDOM % 30 < 30))
 	then
-		printf "0 "
-	else
 		printf "1 "
+	else
+		printf "0 "
 	fi
 
 	if((COUNTER % SIDE == 0))
