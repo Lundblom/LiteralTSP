@@ -9,6 +9,11 @@
 namespace pathfinding 
 {
 
+	#define PATH_INFINITY 1000000
+
+	//All location offsets from the current node that we check
+	static const std::vector<std::pair<int, int> >locations = {{0,-1}, {0, 1}, {-1, 0}, {1, 0}};
+
 	std::stack<Node*> a_star(std::vector<std::vector<Node*> >& g, std::pair<int, int> start, std::pair<int, int> end, double heuristic_coefficient)
 	{
 		std::vector<std::vector<int> > distance(g.size(), std::vector<int>(g.size(), PATH_INFINITY));
@@ -107,7 +112,5 @@ namespace pathfinding
 		}
 
 		return path;
-
 	}
-
 }

@@ -5,7 +5,6 @@
 #include <condition_variable>
 
 #include "dijkstras.cpp"
-#include "a_star.cpp"
 #include "measure_time.h"
 
 
