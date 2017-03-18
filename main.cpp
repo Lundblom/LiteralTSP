@@ -3,7 +3,8 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
-
+#include <cstring>
+#include <stdio.h>
 #include "dijkstras.cpp"
 #include "a_star.cpp"
 #include "measure_time.h"
@@ -40,8 +41,6 @@ void path_generator(int thread_id, int type)
 
 	for(int i = 0; i < RUN_TIMES; ++i)
 	{
-		
-
 		startX = 0;
 		startY = 0;
 
@@ -64,7 +63,7 @@ void path_generator(int thread_id, int type)
 
 		bool* pathArr = new bool[GRID_SIZE * GRID_SIZE];
 
-		std::memset(pathArr, 0, sizeof(bool) * GRID_SIZE * GRID_SIZE);
+		memset(pathArr, 0, sizeof(bool) * GRID_SIZE * GRID_SIZE);
 
 		while(!result.empty())
 		{
