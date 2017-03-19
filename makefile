@@ -1,11 +1,13 @@
 INCLUDE=include
 STD=-std=c++11
-install : main.o node.o
-	g++ -Wall -I $(INCLUDE) $(STD) -o bin/out main.o node.o
+ARGS= -pthread
+install : main.o Node.o PathStruct.o NodeCalculatorThread.o
+	g++ -Wall -I $(INCLUDE) $(ARGS) $(STD) -o bin/out main.o Node.o
 
-main.o : main.cpp dijkstras.cpp a_star.cpp node.o
-	gcc -Wall $(STD) -I $(INCLUDE) -c main.cpp
+main.o : main.cpp
+	g++ -Wall $(STD) -I $(INCLUDE) $(ARGS) -c main.cpp
 
-node.o : node.cpp
-	gcc -Wall $(STD) -I $(INCLUDE) -c node.cpp
+%.o : %.cpp include/%.h
+	g++ -Wall $(STD) -I $(INCLUDE) $(ARGS) -c $< -o $@
+
 

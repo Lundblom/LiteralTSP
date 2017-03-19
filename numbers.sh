@@ -10,7 +10,7 @@ echo $SIDE
 
 
 while(( COUNTER < SIZE )); do
-	if(( RANDOM % 30 < 30))
+	if(( RANDOM % 30 < 27))
 	then
 		printf "1 "
 	else
