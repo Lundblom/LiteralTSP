@@ -1,4 +1,7 @@
 #include "NodeCalculatorThread.h"
+#include <chrono>
+
+sem_t NodeCalculatorThread::THREAD_SEM;
 
 NodeCalculatorThread::NodeCalculatorThread(int travelers)
 {
@@ -8,38 +11,55 @@ NodeCalculatorThread::NodeCalculatorThread(int travelers)
 
 	for(int i = 0; i < travelers; ++i)
 	{
-		_pathData[i] = NULL: 
+		_pathData[i] = NULL;
 	}
 
 	this->pathData = _pathData;
+
+	t = new std::thread(&NodeCalculatorThread::work_loop, this);
 }
 
-void work_loop()
+void NodeCalculatorThread::work_loop()
 {
 	while(true)
 	{
 		for(int i = 0; i < travelers; ++i)
 		{
-			if(pathData[i] == null)
+			if(pathData[i] == NULL)
 			{
-				sleep(estimatedWorkTime);
+				std::this_thread::sleep_for(std::chrono::duration<double>(estimatedWorkTime));
 			}
 			else
 			{
-				double time = pathData[i].work();
+				double time = pathData[i]->work();
 				estimatedWorkTime = (time + estimatedWorkTime) / 2;
 
-				if(pathData[i].complete())
+				if(pathData[i]->complete())
 				{
-					//Expel it from the array and send the result to the main thread
+					std::stack<Node*> s;
+
+					Node* current = (*graph)[pathData[i]->get_end_x()][pathData[i]->get_end_y()];
+					while(current != NULL)
+					{
+						s.push(current);
+						current = pathData[i]->get_previous(current->Position().first, current->Position().second);
+					}
+
+					pathData[i]->traveler->InitiateTravel(s);
+
+					delete pathData[i];
+					pathData.erase(pathData.begin() + i);
+
+					sem_post(&NodeCalculatorThread::THREAD_SEM);
 				}
 			}
 		}
 	}
 }
 
-void NodeCalculatorThread::assign_new_task(PathStruct* ps, std::pair<int, int> start, std::pair<int, int> end)
+void NodeCalculatorThread::assign_new_task(Traveler* t, std::pair<int, int> start, std::pair<int, int> end, int gridSize)
 {
-	PathStructWrapper psw(ps, start, end);
-	stuctData.push_back(psw);
+	PathStruct* ps = new PathStruct(gridSize, start, end, t, graph);
+	
+	pathData.push_back(ps);
 }

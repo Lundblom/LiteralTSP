@@ -1,14 +1,17 @@
+#pragma once
 #include <thread>
 #include <vector>
 #include "PathStruct.h"
+#include <semaphore.h>
 
 class NodeCalculatorThread
 {
 
 private:
-	std::thread t;
+	std::thread* t;
 	int travelers;
-	std::vector<PathStructWrapper> structData;
+	std::vector< std::vector< Node* > >* graph;
+	std::vector<PathStruct*> pathData;
 
 	double estimatedWorkTime = 0;
 
@@ -16,7 +19,9 @@ private:
 
 	void work_loop();
 public:
-	NodeCalculatorThread();
-	void assign_new_task(PathStruct*, std::pair<int, int>, std::pair<int, int>);
 
+	static sem_t THREAD_SEM;
+
+	NodeCalculatorThread(int);
+	void assign_new_task(Traveler*, std::pair<int, int>, std::pair<int, int>, int);
 };
