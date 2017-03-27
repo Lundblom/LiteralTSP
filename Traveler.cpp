@@ -1,4 +1,5 @@
 #include <utility> 
+#include <iostream>
 #include "Traveler.h"
 
 namespace pathfinding
@@ -23,12 +24,19 @@ namespace pathfinding
 	}
 	void Traveler::Travel()
 	{
+		if(this->currentPath.empty())
+		{
+			std::cout << "Path is empty..." << std::endl;
+			this->arrived = true;
+			return;
+		}
 		Node* n = this->currentPath.top();
 		this->currentPath.pop();
 		this->position = n->Position();
 
-		if(this->currentPath.top() == NULL)
+		if(this->currentPath.empty())
 		{
+			std::cout << "Traveler has arrived!" << std::endl;
 			this->arrived = true;
 		}
 	}

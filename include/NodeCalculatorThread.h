@@ -10,6 +10,7 @@ class NodeCalculatorThread
 private:
 	std::thread* t;
 	int travelers;
+	bool started = false;
 	std::vector< std::vector< Node* > >* graph;
 	std::vector<PathStruct*> pathData;
 
@@ -22,6 +23,7 @@ public:
 
 	static sem_t THREAD_SEM;
 
-	NodeCalculatorThread(int);
+	NodeCalculatorThread(int, std::vector< std::vector< Node* > >*);
 	void assign_new_task(Traveler*, std::pair<int, int>, std::pair<int, int>, int);
+	void start();
 };

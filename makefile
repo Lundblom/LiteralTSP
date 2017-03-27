@@ -1,6 +1,6 @@
 INCLUDE=include
 STD=-std=c++11
-ARGS= -pthread
+ARGS= -g -pthread
 install : newMain.o Node.o PathStruct.o NodeCalculatorThread.o Traveler.o 
 	g++ -Wall -I $(INCLUDE) $(ARGS) $(STD) -o bin/out newMain.o Traveler.o Node.o NodeCalculatorThread.o PathStruct.o
 

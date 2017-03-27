@@ -26,11 +26,6 @@ static int GRID_SIZE;
 static int THREADS;
 static int RUN_TIMES;
 
-namespace pathfinding
-{
-	static sem_t THREAD_SEM;
-}
-
 
 using namespace pathfinding;
 
@@ -100,13 +95,15 @@ static std::vector< std::vector< Node* > > graph;
 
 void travel_handler(Traveler* t)
 {
+	std::cout << "Started new travel handler." << std::endl;
 	while(!t->Arrived())
 	{
-		int d = t->NextDistance();
-		std::this_thread::sleep_for(std::chrono::duration<double>(d * TRAVEL_COEFFICIENT));
+		int distance = t->NextDistance();
+		std::this_thread::sleep_for(std::chrono::milliseconds(distance * TRAVEL_COEFFICIENT));
+		std::cout << "Traveler traversing distance " << distance << std::endl;
 		t->Travel();
 	}
-	delete t->travellingThread;
+	std::cout << "Exiting travel handler." << std::endl;
 }
 
 int main(int argc, char** argv)
@@ -144,7 +141,7 @@ int main(int argc, char** argv)
 
 	int travelersCount = atoi(argv[3]);
 
-	NodeCalculatorThread nct(travelersCount);
+	NodeCalculatorThread nct(travelersCount, &graph);
 	std::vector<Traveler*> travelers;
 
 	for(int i = 0; i < travelersCount; ++i)
@@ -152,20 +149,28 @@ int main(int argc, char** argv)
 		travelers.push_back(new Traveler(std::make_pair(0,0)));
 	}
 
-	sem_init(&THREAD_SEM, 0, -1);
+	sem_init(&NodeCalculatorThread::THREAD_SEM, 0, 0);
 
 	for(int i = 0; i < travelersCount; ++i)
 	{
 		nct.assign_new_task(travelers[i], std::make_pair(0,0), std::make_pair(gridSize-1, gridSize-1), gridSize);
 	}
 
+	nct.start();
+
 	while(true)
 	{
-		sem_wait(&THREAD_SEM);
+		std::cout << "Waiting for semaphore..." << std::endl;
+		sem_wait(&NodeCalculatorThread::THREAD_SEM);
 		for(int i = 0; i < travelersCount; ++i)
 		{
 			if(!travelers[i]->Arrived())
 			{
+				std::cout << "Traveler " << i << " has not arrived, creating new thread." << std::endl;
+				if(!travelers[i]->travellingThread)
+				{
+					delete travelers[i]->travellingThread;
+				}
 				travelers[i]->travellingThread = new std::thread(travel_handler, travelers[i]);
 				break;
 			}

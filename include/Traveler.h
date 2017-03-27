@@ -13,11 +13,11 @@ namespace pathfinding
 	private:
 		std::pair<int, int> position;
 		std::stack<Node*> currentPath;
-		bool arrived = false;
+		bool arrived = true;
 
 	public:
 
-		std::thread* travellingThread;
+		std::thread* travellingThread = NULL;
 
 		Traveler(std::pair<int, int>);
 		bool Arrived();

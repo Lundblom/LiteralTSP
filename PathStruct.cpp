@@ -1,12 +1,14 @@
 #include <semaphore.h>
+#include <iostream>
 #include "PathStruct.h"
 #include "Node.h"
 #include "Traveler.h"
 
+
 using namespace pathfinding;
 
 #define PATH_INFINITY 1000000
-#define PATH_ITERATIONS 20
+#define PATH_ITERATIONS 200
 #define HEURISTIC_COEFFICIENT 10000
 
 static const std::vector<std::pair<int, int> >locations = {{0,-1}, {0, 1}, {-1, 0}, {1, 0}};
@@ -27,6 +29,25 @@ PathStruct::PathStruct(int gridSize, std::pair<int, int> start, std::pair<int, i
 	this->traveler = t;
 	this->graph = graph;
 	this->end_node = (*graph)[end.first][end.second];
+
+	for(int i = 0; i < (*graph).size(); ++i)
+	{
+		for(int j = 0; j < (*graph)[i].size(); ++j)
+		{
+			//We dont add the first element yet
+			if(i == start.first && j == start.second)
+			{
+				continue;
+			}
+			//Adds a node with infinity (unknown) distance
+			std::pair<Node*, int> node((*graph)[i][j], PATH_INFINITY);
+			queue.push(node);
+		}
+	}
+
+	distance[start.first][start.second] = 0;
+	std::pair<Node*, int> startNode((*graph)[start.first][start.second], 0);
+	queue.push(startNode);
 }
 
 int PathStruct::get_start_x()
@@ -88,6 +109,8 @@ double PathStruct::work()
 {
 	double wall0 = get_wall_time();
 
+	std::pair<Node*, int> nodePairBefore = queue.top();
+
 	for(int i = 0; i < PATH_ITERATIONS && !queue.empty(); ++i)
 	{
 		//Get the node with the lowest distance
@@ -99,6 +122,7 @@ double PathStruct::work()
 		//Checks if we are done
 		if(u->Position().first == end.first && u->Position().second == end.second)
 		{
+			std::cout << "Thread is done! " << std::endl;
 			_complete = true;
 			break;
 		}
@@ -135,6 +159,16 @@ double PathStruct::work()
 		}
 	}
 
+	std::pair<Node*, int> nodePairAfter = queue.top();
+
+	if(!queue_is_empty())
+	{
+		std::cout << "Progressed " << nodePairBefore.first->StraightDistance(nodePairAfter.first) << " units" << std::endl;
+	}
+	else
+	{
+		std::cout << "Progressed to end." << std::endl;
+	}
 	double wall1 = get_wall_time();
 
 	return (wall1 - wall0);

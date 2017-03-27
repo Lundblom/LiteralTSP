@@ -27,7 +27,7 @@ private:
 	std::pair<int, int> end;
 	Node* end_node;
 
-	bool _complete;
+	bool _complete = false;
 	
 	double get_wall_time(){
     struct timeval time;
