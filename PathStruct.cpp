@@ -7,9 +7,9 @@
 
 using namespace pathfinding;
 
-#define PATH_INFINITY 1000000
-#define PATH_ITERATIONS 200
-#define HEURISTIC_COEFFICIENT 10000
+#define PATH_INFINITY 2147483647
+#define PATH_ITERATIONS 10000
+
 
 static const std::vector<std::pair<int, int> >locations = {{0,-1}, {0, 1}, {-1, 0}, {1, 0}};
 
@@ -29,6 +29,7 @@ PathStruct::PathStruct(int gridSize, std::pair<int, int> start, std::pair<int, i
 	this->traveler = t;
 	this->graph = graph;
 	this->end_node = (*graph)[end.first][end.second];
+	this->gridSize = gridSize;
 
 	for(int i = 0; i < (*graph).size(); ++i)
 	{
@@ -44,6 +45,8 @@ PathStruct::PathStruct(int gridSize, std::pair<int, int> start, std::pair<int, i
 			queue.push(node);
 		}
 	}
+
+	t->InitiatePathCalculation();
 
 	distance[start.first][start.second] = 0;
 	std::pair<Node*, int> startNode((*graph)[start.first][start.second], 0);
@@ -109,8 +112,6 @@ double PathStruct::work()
 {
 	double wall0 = get_wall_time();
 
-	std::pair<Node*, int> nodePairBefore = queue.top();
-
 	for(int i = 0; i < PATH_ITERATIONS && !queue.empty(); ++i)
 	{
 		//Get the node with the lowest distance
@@ -119,10 +120,13 @@ double PathStruct::work()
 
 		Node* u = nodePair.first;
 
+		this->traveler->IncrementVisitedNodes();
+
+		//std::cout << "On node (" << u->Position().first << ", " << u->Position().second << ")" << std::endl; 
+
 		//Checks if we are done
 		if(u->Position().first == end.first && u->Position().second == end.second)
 		{
-			std::cout << "Thread is done! " << std::endl;
 			_complete = true;
 			break;
 		}
@@ -132,8 +136,10 @@ double PathStruct::work()
 			int x = locations[i].first + u->Position().first;
 			int y = locations[i].second + u->Position().second;
 
+			this->traveler->IncrementInspectedNodes();
+
 			//Bounds check
-			if(x < 0 || y < 0 || x >= (*graph).size() || y >= (*graph).size())
+			if(x < 0 || y < 0 || x >= gridSize || y >= gridSize)
 			{
 				continue;
 			}
@@ -144,32 +150,27 @@ double PathStruct::work()
 				continue;
 			}
 
-			int a = distance[u->Position().first][u->Position().second] + v->Length() + v->StraightDistance(end_node) * HEURISTIC_COEFFICIENT;
+			//std::cout << "	on neighbour (" << x << ", " << y << ") " << std::endl;
+
+			int a = distance[u->Position().first][u->Position().second] + v->Length() + v->StraightDistance(end_node) * HEURISTIC_COEFFICIENT * traveler->Id();
 			
 			//If this path is shorter than the one we are currently on
 			if(a < distance[x][y])
 			{
 				//Sets the new total path distance
 				distance[x][y] = a;
-				//Update our path trace, set the node we came fram
+				//Update our path trace, set the node we came from
 				previous[x][y] = u;
+				//std::cout << "Set p[" << x << "][" << y << "] to  u = (" << u->Position().first << ", " << u->Position().second << ")" << std::endl;
 				//Push the new node with the new distance set
 				queue.push(std::make_pair(v, distance[x][y]));
+				//std::cout << "Pushing (" << x << ", " << y << ") to stack." << std::endl;
 			}
 		}
 	}
 
-	std::pair<Node*, int> nodePairAfter = queue.top();
-
-	if(!queue_is_empty())
-	{
-		std::cout << "Progressed " << nodePairBefore.first->StraightDistance(nodePairAfter.first) << " units" << std::endl;
-	}
-	else
-	{
-		std::cout << "Progressed to end." << std::endl;
-	}
 	double wall1 = get_wall_time();
+	traveler->IncrementComputationTime( (wall1 - wall0) );
 
 	return (wall1 - wall0);
 } 

@@ -1,7 +1,7 @@
 #/bin/bash
 
-SIZE=10000
-SIDE=100
+SIZE=1048576
+SIDE=1024
 
 COUNTER=0
 
@@ -10,12 +10,8 @@ echo $SIDE
 
 
 while(( COUNTER < SIZE )); do
-	if(( RANDOM % 30 < 40))
-	then
-		printf "1 "
-	else
-		printf "0 "
-	fi
+	printf $((RANDOM % 30))
+	printf " "
 
 	if((COUNTER % SIDE == 0))
 	then

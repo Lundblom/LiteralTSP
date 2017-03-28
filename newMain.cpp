@@ -9,174 +9,176 @@
 #include "Node.h"
 #include "Traveler.h"
 #include "NodeCalculatorThread.h"
+#include "PathStruct.h"
 
+#define TRAVEL_COEFFICIENT 400
 
-#define STARTX 0
-#define STARTY 0
-#define ENDX 7
-#define ENDY 7
-
-#define TRAVEL_COEFFICIENT 40
-
-static std::condition_variable printCV;
-static std::mutex printMutex;
-static bool printReady = true;
-
-static int GRID_SIZE;
-static int THREADS;
-static int RUN_TIMES;
-
+sem_t print_sem;
+sem_t traveler_count_sem;
+int traveler_count = 0;
 
 using namespace pathfinding;
 
-static std::vector< std::vector< Node* > > graph;
-
-/*void path_generator(int thread_id, int type)
+void travel_handler(Traveler* t, NodeCalculatorThread* nct, std::vector<location_t>* targets, unsigned int* targetIndex)
 {
-
-	int startX = 0;
-	int startY = 0;
-
-	double totalTime = 0;
-	double totalLength = 0;
-
-	int endX = -1;
-	int endY = -1;
-
-	for(int i = 0; i < RUN_TIMES; ++i)
-	{
-		startX = 0;
-		startY = 0;
-
-		endX = GRID_SIZE - 1;
-		endY = GRID_SIZE - 1;
-
-		std::stack<Node*> result;
-		double cpu0  = get_cpu_time();
-		double wall0 = get_wall_time();
-		if(type == 1)
-			result = a_star(graph, std::make_pair(startX,startY), std::make_pair(endX, endY), 1000000);
-		else
-			result = dijkstras(graph, std::make_pair(startX,startY), std::make_pair(endX, endY));
-		double cpu1  = get_cpu_time();
-		double wall1 = get_wall_time();
-
-
-		totalLength += result.size();
-		totalTime += (cpu1 - cpu0);
-
-		bool* pathArr = new bool[GRID_SIZE * GRID_SIZE];
-
-		memset(pathArr, 0, sizeof(bool) * GRID_SIZE * GRID_SIZE);
-
-		while(!result.empty())
-		{
-			Node* n = result.top();
-			result.pop();
-			pathArr[n->Position().first * GRID_SIZE + n->Position().second] = 1;
-		}
-		
-		std::unique_lock<std::mutex> lock(printMutex);
-		while(!printReady)
-		{
-			printCV.wait(lock);
-		}
-
-		std::cout << "Thread " << thread_id << " finished time " << (i+1) << std::endl;
-
-		printReady = true;
-		lock.unlock();
-		printCV.notify_one();
-	}
-
-	std::cout << "Thread " << thread_id << " finished with time per length unit: " << ((totalTime) / (totalLength)) << std::endl;
-
-}*/
-
-void travel_handler(Traveler* t)
-{
-	std::cout << "Started new travel handler." << std::endl;
 	while(!t->Arrived())
 	{
 		int distance = t->NextDistance();
-		std::this_thread::sleep_for(std::chrono::milliseconds(distance * TRAVEL_COEFFICIENT));
-		std::cout << "Traveler traversing distance " << distance << std::endl;
+		if(NodeCalculatorThread::SIMULATION_MODE)
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(distance * TRAVEL_COEFFICIENT));
+		}
+		t->IncrementTravelTime( distance );
 		t->Travel();
 	}
-	std::cout << "Exiting travel handler." << std::endl;
+	sem_wait(&print_sem);
+	std::cerr << "traveler " << t->Id() << " ocmp t: " << t->ComputationTime() << 
+	", travel t: " << t->TravelTime() << ", inspected: " << t->InspectedNodes() << ", visited: " << t->VisitedNodes() << std::endl;
+	sem_post(&print_sem);
+
+	t->SaveRoundData();
+
+	++(*targetIndex);
+	if( (*targetIndex) < (*targets).size() )
+	{
+		nct->assign_new_task(t, t->Position(), (*targets)[(*targetIndex)]);
+	}
+	else
+	{
+		sem_wait(&traveler_count_sem);
+		--traveler_count;
+		std::cerr << "Traveler " << t->Id() << " COMPLETE!" << std::endl;
+		if(traveler_count == 0)
+		{
+			sem_post(&NodeCalculatorThread::THREAD_SEM);
+		}
+		sem_post(&traveler_count_sem);
+
+	}
 }
 
 int main(int argc, char** argv)
 {
-
 	int vertices;
 	int gridSize;
+	std::vector< std::vector< Node* > > graph;
+	std::vector<location_t> targets; 
+	
 
 	std::cin >> vertices;
 	std::cin >> gridSize;
 
-	THREADS = atoi(argv[1]);
-	RUN_TIMES = atoi(argv[2]);
-
-	std::cout << "vertices: " << vertices << std::endl;
-	std::cout << "gridSize: " << gridSize << std::endl;
-
-	GRID_SIZE = gridSize;
-
-	graph = std::vector< std::vector< Node* > >(GRID_SIZE, std::vector<Node*>(GRID_SIZE, NULL));
+	graph = std::vector< std::vector< Node* > >(gridSize, std::vector<Node*>(gridSize, NULL));
 
 	int counter = 0;
 	int rowCounter = 0;
+
 	while(counter < vertices)
 	{
 		bool isTraversable;
-		std::cin >> isTraversable;
-		graph[rowCounter][counter % GRID_SIZE] = new Node(1, std::make_pair(rowCounter, counter % GRID_SIZE), isTraversable);
+		int weight = 0;
+		std::cin >> weight;;
+		if(weight > 0)
+		{
+			isTraversable = true;
+		}
+
+		graph[rowCounter][counter % gridSize] = 
+			new Node(weight, std::make_pair(rowCounter, counter % gridSize), isTraversable);
+
 		++counter;
-		if(counter % GRID_SIZE == 0)
+		if(counter % gridSize == 0)
 		{
 			++rowCounter;
 		}
 	}
 
-	int travelersCount = atoi(argv[3]);
+	int travelersCount = atoi(argv[1]);
+	int targetCount = atoi(argv[2]);
 
-	NodeCalculatorThread nct(travelersCount, &graph);
+	traveler_count = travelersCount;
+
+	std::vector<unsigned int> target_index(travelersCount);
+	for(int i = 0; i < targetCount; ++i)
+	{
+		location_t loc(rand() % (gridSize-1) + 1, rand() % (gridSize-1) + 1);
+		targets.push_back(loc);
+	}
+
+
+	NodeCalculatorThread nct(travelersCount, &graph, gridSize);
 	std::vector<Traveler*> travelers;
+	//TravelVisualiser travelVisualiser(gridSize, travelers, graph);
 
 	for(int i = 0; i < travelersCount; ++i)
 	{
-		travelers.push_back(new Traveler(std::make_pair(0,0)));
+		travelers.push_back(new Traveler(std::make_pair(0,0), i ));
+		target_index[i] = 0;
 	}
 
 	sem_init(&NodeCalculatorThread::THREAD_SEM, 0, 0);
+	sem_init(&print_sem, 0, 1);
+	sem_init(&traveler_count_sem, 0, 1);
 
 	for(int i = 0; i < travelersCount; ++i)
 	{
-		nct.assign_new_task(travelers[i], std::make_pair(0,0), std::make_pair(gridSize-1, gridSize-1), gridSize);
+		nct.assign_new_task(travelers[i], std::make_pair(0,0), std::make_pair(gridSize-1, gridSize-1));
 	}
 
 	nct.start();
+	//travelVisualiser.start();
 
 	while(true)
 	{
-		std::cout << "Waiting for semaphore..." << std::endl;
 		sem_wait(&NodeCalculatorThread::THREAD_SEM);
+		if(traveler_count == 0)
+		{
+			for(int i = 0; i < travelers.size(); ++i)
+			{
+				if(travelers[i]->travellingThread)
+				{
+					travelers[i]->travellingThread->join();
+				}
+				
+				//delete travelers[i];
+			}
+			break;
+		}
 		for(int i = 0; i < travelersCount; ++i)
 		{
-			if(!travelers[i]->Arrived())
+			if(!travelers[i]->Arrived() && !travelers[i]->StartedTraveling())
 			{
-				std::cout << "Traveler " << i << " has not arrived, creating new thread." << std::endl;
-				if(!travelers[i]->travellingThread)
+				if(travelers[i]->travellingThread)
 				{
+					travelers[i]->travellingThread->join();
 					delete travelers[i]->travellingThread;
 				}
-				travelers[i]->travellingThread = new std::thread(travel_handler, travelers[i]);
+				travelers[i]->StartTravel();
+				travelers[i]->travellingThread = new std::thread(travel_handler, travelers[i], &nct, &targets, &target_index[i]);
 				break;
 			}
 		}
 	}
 
+
+	std::cout << "# h\ttravel\tcomp\n";
+	//std::cout << "# id\tt*c\n";
+	for(int i = 0; i < travelers.size(); ++i)
+	{	
+		double gttt = travelers[i]->GetTotalTravelTime();
+		double gtct =  travelers[i]->GetTotalComputationTime();
+		std::cout << travelers[i]->Id() * HEURISTIC_COEFFICIENT << "\t" << gttt <<
+		 "\t" << gtct << std::endl;
+		delete travelers[i];
+	}
+
+	for(int i = 0; i < gridSize; ++i)
+	{
+		for(int j = 0; j < gridSize; ++j)
+		{
+			delete graph[i][j]; 
+		}
+	}
 
 	return 0;
 }

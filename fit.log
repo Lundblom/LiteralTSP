@@ -1,0 +1,88 @@
+
+
+*******************************************************************************
+Tue Mar 28 15:50:44 2017
+
+
+FIT:    data read from 'data.txt'
+        format = z
+        #datapoints = 20
+        residuals are weighted equally (unit weight)
+
+function used for fitting: f(x)
+	f(x) = a*x**b
+fitted parameters initialized with current variable values
+
+iter      chisq       delta/lim  lambda   a             b            
+   0 3.4503546003e+10   0.00e+00  2.23e+01    1.000000e+00   1.000000e+00
+
+Current data point
+=========================
+#               = 4 out of 20
+x               = 1279.01        
+z               = 37056          
+
+Current set of parameters
+=========================
+a               = 1279.01        
+b               = 698.01         
+
+BREAK: Undefined value during function evaluation
+
+*******************************************************************************
+Tue Mar 28 15:53:37 2017
+
+
+FIT:    data read from 'data.txt'
+        format = z
+        #datapoints = 20
+        residuals are weighted equally (unit weight)
+
+function used for fitting: f(x)
+	f(x) = a*x**b
+fitted parameters initialized with current variable values
+
+iter      chisq       delta/lim  lambda   a             b            
+   0 3.4503546003e+10   0.00e+00  2.23e+01    1.000000e+00   1.000000e+00
+
+Current data point
+=========================
+#               = 4 out of 20
+x               = 1279.01        
+z               = 37056          
+
+Current set of parameters
+=========================
+a               = 1279.01        
+b               = 698.01         
+
+BREAK: Undefined value during function evaluation
+
+*******************************************************************************
+Tue Mar 28 15:56:33 2017
+
+
+FIT:    data read from 'data.txt'
+        format = z
+        #datapoints = 20
+        residuals are weighted equally (unit weight)
+
+function used for fitting: f(x)
+	f(x) = a*x**b
+fitted parameters initialized with current variable values
+
+iter      chisq       delta/lim  lambda   a             b            
+   0 3.4503546003e+10   0.00e+00  2.23e+01    1.000000e+00   1.000000e+00
+
+Current data point
+=========================
+#               = 4 out of 20
+x               = 1279.01        
+z               = 37056          
+
+Current set of parameters
+=========================
+a               = 1279.01        
+b               = 698.01         
+
+BREAK: Undefined value during function evaluation

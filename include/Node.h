@@ -3,11 +3,13 @@
 
 namespace pathfinding
 {
+	typedef std::pair<int, int> location_t;
+
 	class Node 
-	{
+	{	
 	private:
 		int length;
-		std::pair<int, int> position;
+		location_t position;
 		bool traversable = true;
 	public:
 		Node(int, std::pair<int, int>, bool);
