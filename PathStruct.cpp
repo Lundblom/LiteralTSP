@@ -9,9 +9,11 @@ using namespace pathfinding;
 
 #define PATH_INFINITY 2147483647
 #define PATH_ITERATIONS 10000
+#define SQUARE_ROOT_TWO 1.414213562373095048801688724209698078569671875376948073176
 
 
 static const std::vector<std::pair<int, int> >locations = {{0,-1}, {0, 1}, {-1, 0}, {1, 0}};
+static const std::vector<std::pair<int, int> > diagonal_locations = {{-1, 1}, {1, 1}, {-1, -1}, {1, -1}};
 
 PathStruct::PathStruct(int gridSize, std::pair<int, int> start, std::pair<int, int> end, Traveler* t, std::vector< std::vector< Node* > >* graph)
 {
@@ -131,10 +133,24 @@ double PathStruct::work()
 			break;
 		}
 
-		for(int i = 0; i < locations.size(); ++i)
+		for(int i = 0; i < locations.size() + diagonal_locations.size(); ++i)
 		{
-			int x = locations[i].first + u->Position().first;
-			int y = locations[i].second + u->Position().second;
+			int x;
+			int y;  
+
+			int lengthMultiplier = 1;
+
+			if(i < locations.size())
+			{
+				x = locations[i].first + u->Position().first;
+				y = locations[i].second + u->Position().second;
+			}
+			else
+			{
+				x = diagonal_locations[i-locations.size()].first + u->Position().first;
+				y = diagonal_locations[i-locations.size()].second + u->Position().second;
+				lengthMultiplier = SQUARE_ROOT_TWO;
+			}
 
 			this->traveler->IncrementInspectedNodes();
 
@@ -152,7 +168,7 @@ double PathStruct::work()
 
 			//std::cout << "	on neighbour (" << x << ", " << y << ") " << std::endl;
 
-			int a = distance[u->Position().first][u->Position().second] + v->Length() + v->StraightDistance(end_node) * HEURISTIC_COEFFICIENT * traveler->Id();
+			int a = distance[u->Position().first][u->Position().second] + v->Length() * lengthMultiplier + v->StraightDistance(end_node) * HEURISTIC_COEFFICIENT * traveler->Id();
 			
 			//If this path is shorter than the one we are currently on
 			if(a < distance[x][y])
@@ -166,6 +182,11 @@ double PathStruct::work()
 				queue.push(std::make_pair(v, distance[x][y]));
 				//std::cout << "Pushing (" << x << ", " << y << ") to stack." << std::endl;
 			}
+		}
+
+		for(int i = 0; i < diagonal_locations.size(); ++i)
+		{
+
 		}
 	}
 

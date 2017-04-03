@@ -6,18 +6,26 @@
 #include <cstring>
 #include <stdio.h>
 #include <semaphore.h>
+#include <cstdlib>
 #include "Node.h"
 #include "Traveler.h"
 #include "NodeCalculatorThread.h"
 #include "PathStruct.h"
+#include "a_star.cpp"
 
 #define TRAVEL_COEFFICIENT 400
+#define AMOUNT_OF_CITIES 5
+#define CITY_HEURISTIC_COEFFICIENT 20000
 
 sem_t print_sem;
 sem_t traveler_count_sem;
 int traveler_count = 0;
 
+
+
 using namespace pathfinding;
+
+
 
 void travel_handler(Traveler* t, NodeCalculatorThread* nct, std::vector<location_t>* targets, unsigned int* targetIndex)
 {
@@ -57,6 +65,32 @@ void travel_handler(Traveler* t, NodeCalculatorThread* nct, std::vector<location
 	}
 }
 
+void generate_cities(std::vector<location_t>& city_coordinates, std::vector<std::vector<Node*> >& g)
+{
+	while(true)
+	{
+		int firstIndex = rand() % city_coordinates.size();
+		location_t firstLocation = city_coordinates[firstIndex];
+		city_coordinates.erase(city_coordinates.begin() + firstIndex);
+		if(city_coordinates.empty())
+		{
+			break;
+		}
+		int secondIndex = rand() % city_coordinates.size();
+		location_t secondLocation = city_coordinates[secondIndex];
+
+		std::stack<Node*> road = a_star(g, firstLocation, secondLocation, CITY_HEURISTIC_COEFFICIENT);
+
+		while(!road.empty())
+		{
+			Node* n = road.top();
+			road.pop();
+			n->makeRoad();
+			std::clog << n->Position().first << ", " << n->Position().second << std::endl;
+		}
+	}
+}
+
 int main(int argc, char** argv)
 {
 	int vertices;
@@ -64,6 +98,7 @@ int main(int argc, char** argv)
 	std::vector< std::vector< Node* > > graph;
 	std::vector<location_t> targets; 
 	
+	srand(time(0));
 
 	std::cin >> vertices;
 	std::cin >> gridSize;
@@ -92,6 +127,36 @@ int main(int argc, char** argv)
 			++rowCounter;
 		}
 	}
+
+	//GENERATE CITIES
+	std::vector<location_t> city_coordinates(AMOUNT_OF_CITIES);
+	for(int i = 0; i < AMOUNT_OF_CITIES; ++i)
+	{
+		city_coordinates[i] = location_t(rand() % gridSize, rand() % gridSize);
+		std::clog << "Created city at (" << city_coordinates[i].first << ", " << city_coordinates[i].second << ")" << std::endl;
+	}
+
+	generate_cities(city_coordinates, graph);
+
+	//PRINT MAP
+
+	for(int i = 0; i < gridSize; ++i)
+	{
+		for(int j = 0; j < gridSize; ++j)
+		{
+			if(graph[i][j]->Type() == 0)
+			{
+				std::clog << "o";
+			}
+			else if(graph[i][j]->Type() == 2)
+			{
+				std::clog << "X";
+			}
+		}
+		std::clog << std::endl;
+	}
+
+
 
 	int travelersCount = atoi(argv[1]);
 	int targetCount = atoi(argv[2]);

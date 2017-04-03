@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "Node.h"
+#include <iostream>
 namespace pathfinding
 {
 	Node::Node(int _length, std::pair<int, int> _position, bool _traversable) :
@@ -22,6 +23,24 @@ namespace pathfinding
 	std::pair<int, int> Node::Position()
 	{
 		return this->position;
+	}
+
+	void Node::makeRoad()
+	{
+		if(this->type != NodeType::ROAD)
+		{
+			this->type = NodeType::ROAD;
+			this->length *= ROAD_COEFFICIENT;
+		}
+		else
+		{
+			//Already is road
+		}
+	}
+
+	Node::NodeType Node::Type() const
+	{
+		return this->type;
 	}
 
 	double Node::StraightDistance(Node* n)
