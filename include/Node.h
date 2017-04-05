@@ -1,5 +1,6 @@
 #pragma once
 #include <utility>
+#include <iostream>
 
 namespace pathfinding
 {
@@ -7,34 +8,46 @@ namespace pathfinding
 
 	#define ROAD_COEFFICIENT 0.2
 
+	
+
 	class Node 
-	{	
-	private:
+	{
+	public:
 		enum NodeType
 		{
 			NORMAL,
 			CITY,
 			ROAD,
-			FOREST,
-			MOUNTAIN
+			WOOD,
+			MOUNTAIN,
+			WATER
 		};
-
+	private:
+		
+		static int WOOD_LENGTH;
 		int length;
 		location_t position;
 		bool traversable = true;
 		NodeType type = NodeType::NORMAL;
 
 	public:
+		
+
 		Node(int, std::pair<int, int>, bool);
 
-		int Length();
-		std::pair<int, int> Position();
-		bool Traversable();
+		int Length() const;
+		std::pair<int, int> Position() const;
+		bool Traversable() const;
 
 		NodeType Type() const;
 		
 		double StraightDistance(Node* n);
 		void makeRoad();
+		void makeWood();
+		void makeWater();
+		void makeCity();
+
+		friend std::ostream& operator<< (std::ostream&, const Node&);
 	};
 
 }

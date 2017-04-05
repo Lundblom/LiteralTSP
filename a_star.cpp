@@ -3,6 +3,7 @@
 #include <vector>
 #include <utility> 
 #include <stack>
+#include <iostream>
 
 #include "Node.h"
 
@@ -10,12 +11,15 @@ namespace pathfinding
 {
 
 	#define ASTAR_PATH_INFINITY 2147483647
+	#define SQUARE_ROOT_TWO 1.414213562373095048801688724209698078569671875376948073176
 
 	//All location offsets from the current node that we check
 	static const std::vector<std::pair<int, int> >locations = {{0,-1}, {0, 1}, {-1, 0}, {1, 0}};
+	static const std::vector<std::pair<int, int> > diagonal_locations = {{-1, 1}, {1, 1}, {-1, -1}, {1, -1}};
 
-	std::stack<Node*> a_star(std::vector<std::vector<Node*> >& g, std::pair<int, int> start, std::pair<int, int> end, double heuristic_coefficient)
+	std::stack<Node*> a_star(std::vector<std::vector<Node*> >& g, std::pair<int, int> start, std::pair<int, int> end, double heuristic_coefficient, bool ignore_terrain)
 	{
+		std::clog << "In astar\n"; 
 		std::vector<std::vector<int> > distance(g.size(), std::vector<int>(g.size(), ASTAR_PATH_INFINITY));
 		std::vector<std::vector<Node*> > previous(g.size(), std::vector<Node*>(g.size(), NULL));
 
@@ -34,6 +38,7 @@ namespace pathfinding
 		//The cmp lambda is used to sort the queue
 		std::priority_queue< std::pair<Node*, int>, std::vector <std::pair<Node*, int> > , decltype(cmp) > queue(cmp);
 
+		std::clog << "initializing queue\n";
 		//Queue init
 		for(int i = 0; i < g.size(); ++i)
 		{
@@ -52,6 +57,7 @@ namespace pathfinding
 
 		//Set distance of start to 0
 		distance[start.first][start.second] = 0;
+		std::cout << "start in a_star: " << (*g[start.first][start.second]);
 		std::pair<Node*, int> startNode(g[start.first][start.second], 0);
 		queue.push(startNode);
 
@@ -69,10 +75,24 @@ namespace pathfinding
 				break;
 			}
 
-			for(int i = 0; i < locations.size(); ++i)
+			for(int i = 0; i < locations.size() + diagonal_locations.size(); ++i)
 			{
-				int x = locations[i].first + u->Position().first;
-				int y = locations[i].second + u->Position().second;
+				int x;
+				int y;  
+
+				int lengthMultiplier = 1;
+
+				if(i < locations.size())
+				{
+					x = locations[i].first + u->Position().first;
+					y = locations[i].second + u->Position().second;
+				}
+				else
+				{
+					x = diagonal_locations[i-locations.size()].first + u->Position().first;
+					y = diagonal_locations[i-locations.size()].second + u->Position().second;
+					lengthMultiplier = SQUARE_ROOT_TWO;
+				}
 
 				//Bounds check
 				if(x < 0 || y < 0 || x >= g.size() || y >= g.size())
@@ -81,12 +101,18 @@ namespace pathfinding
 				}
 
 				Node* v = g[x][y];
-				if(!v->Traversable())
+				if(!v->Traversable() && !ignore_terrain)
 				{
 					continue;
 				}
 
-				int a = distance[u->Position().first][u->Position().second] + v->Length() + v->StraightDistance(end_node) * heuristic_coefficient;
+				int l = v->Length();
+				if(ignore_terrain)
+				{
+					l = 30;
+				}
+
+				int a = distance[u->Position().first][u->Position().second] + l * lengthMultiplier + v->StraightDistance(end_node) * heuristic_coefficient;
 				
 				//If this path is shorter than the one we are currently on
 				if(a < distance[x][y])
@@ -101,14 +127,42 @@ namespace pathfinding
 			}
 		}
 
+		std::cout << "Astar done, creating stack\n";
+
 		//Creates a stack with our path in it
 		//Stack is used for easy backtracking
+		Node* last = NULL;
 		Node* current = g[end.first][end.second];
 		std::stack<Node*> path;
+		bool loop = false;
 		while(current != NULL)
 		{
 			path.push(current);
+			Node* cacheN = current;
 			current = previous[current->Position().first][current->Position().second];
+			if(last == current)
+			{
+				std::cout << "Found infinite loop, breaking...\n";
+				loop = true;
+				break;
+			}
+			last = cacheN;
+		}
+
+
+		if(loop)
+		{
+			std::cout << "Lets trace the path!" << std::endl;
+			std::cout << "start is " << (*g[start.first][start.second]);
+			std::cout << "end is " << (*g[end.first][end.second]);
+			std::stack<Node*> pathC = path;
+			while(!pathC.empty())
+			{
+				Node* n = pathC.top();
+				pathC.pop();
+				std::cout << (*n);
+			}
+			exit(0);
 		}
 
 		return path;

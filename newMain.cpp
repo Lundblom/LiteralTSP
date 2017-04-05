@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <semaphore.h>
 #include <cstdlib>
+#include <math.h>
+#include <stdexcept>
 #include "Node.h"
 #include "Traveler.h"
 #include "NodeCalculatorThread.h"
@@ -14,14 +16,16 @@
 #include "a_star.cpp"
 
 #define TRAVEL_COEFFICIENT 100
-#define AMOUNT_OF_CITIES 5
+#define AMOUNT_OF_CITIES 1488
+#define AMOUNT_OF_WOODS 5
+#define AMOUNT_OF_WATER 1
 #define CITY_HEURISTIC_COEFFICIENT 200000
 
 sem_t print_sem;
 sem_t traveler_count_sem;
 int traveler_count = 0;
 
-
+int GRIDSIZE = 0;
 
 using namespace pathfinding;
 
@@ -72,14 +76,21 @@ void generate_cities(std::vector<location_t>& city_coordinates, std::vector<std:
 		int firstIndex = rand() % city_coordinates.size();
 		location_t firstLocation = city_coordinates[firstIndex];
 		city_coordinates.erase(city_coordinates.begin() + firstIndex);
+		g[firstLocation.first][firstLocation.second]->makeCity();
 		if(city_coordinates.empty())
 		{
 			break;
 		}
 		int secondIndex = rand() % city_coordinates.size();
 		location_t secondLocation = city_coordinates[secondIndex];
+		g[secondLocation.first][secondLocation.second]->makeCity();
 
-		std::stack<Node*> road = a_star(g, firstLocation, secondLocation, CITY_HEURISTIC_COEFFICIENT);
+		std::clog << "Starting astar" << std::endl;
+		std::clog << "Start is x: " << firstLocation.first << " y: " << firstLocation.second << std::endl;
+		std::clog << "end is x: " << secondLocation.first << " y: " << secondLocation.second << std::endl;
+		
+		std::stack<Node*> road = a_star(g, firstLocation, secondLocation, CITY_HEURISTIC_COEFFICIENT, true);
+
 
 		while(!road.empty())
 		{
@@ -91,6 +102,65 @@ void generate_cities(std::vector<location_t>& city_coordinates, std::vector<std:
 	}
 	std::clog << "Done with roads" << std::endl;
 }
+
+//Probability function for terrain is
+// e^(-x/d)
+bool terrain_roll(int step, int divider)
+{
+	int roll = rand() % 10000;
+	return roll <= 10000 * exp(-step/divider);
+}
+
+//Recursive function FUCK YEAH MAN
+void generate_terrain_area(Node* n, std::vector<std::vector<Node*> >& g, int step, Node::NodeType type, int divider)
+{
+	if(type == Node::NodeType::WOOD)
+	{
+		n->makeWood();
+	}
+	else if(type == Node::NodeType::WATER)
+	{
+		n->makeWater();
+	}
+	else
+	{
+		throw std::runtime_error("ERROR invalid nodetype sent to generate_terrain_area");
+	}
+	
+	location_t loc = n->Position();
+
+	for(int i = -1; i <= 1; ++i)
+	{
+		for(int j = -1; j <= 1; ++j)
+		{
+			int x = loc.first + i;
+			int y = loc.second + j;
+			if(x < 0 || x >= GRIDSIZE || y < 0 || y >= GRIDSIZE)
+			{
+				continue;
+			}
+			Node* neighbour = g[x][y];
+			if(neighbour->Type() == type)
+			{
+				continue;
+			}
+			if(terrain_roll(step, divider))
+			{
+				generate_terrain_area(neighbour, g, step+1, type, divider);
+			}
+		}
+	}
+}
+
+void generate_terrain_areas(std::vector<location_t>& wood_coordinates, std::vector<std::vector<Node*> >& g, Node::NodeType type, int divider)
+{
+	for (std::vector<location_t>::iterator i = wood_coordinates.begin(); i != wood_coordinates.end(); ++i)
+	{
+		generate_terrain_area(g[i->first][i->second], g, 0, type, divider);
+	}
+}
+
+
 
 int main(int argc, char** argv)
 {
@@ -104,6 +174,8 @@ int main(int argc, char** argv)
 	std::cin >> vertices;
 	std::cin >> gridSize;
 
+	GRIDSIZE = gridSize;
+
 	graph = std::vector< std::vector< Node* > >(gridSize, std::vector<Node*>(gridSize, NULL));
 
 	int counter = 0;
@@ -111,7 +183,7 @@ int main(int argc, char** argv)
 
 	while(counter < vertices)
 	{
-		bool isTraversable;
+		bool isTraversable = false;
 		int weight = 0;
 		std::cin >> weight;;
 		if(weight > 0)
@@ -137,7 +209,24 @@ int main(int argc, char** argv)
 		std::clog << "Created city at (" << city_coordinates[i].first << ", " << city_coordinates[i].second << ")" << std::endl;
 	}
 
+	std::vector<location_t> wood_coordinates(AMOUNT_OF_WOODS);
+	for(int i = 0; i < AMOUNT_OF_WOODS; ++i)
+	{
+		wood_coordinates[i] = location_t(rand() % gridSize, rand() % gridSize);
+	}
+
+	std::vector<location_t> water_coordinates(AMOUNT_OF_WATER);
+	for(int i = 0; i < AMOUNT_OF_WATER; ++i)
+	{
+		water_coordinates[i] = location_t(rand() % gridSize, rand() % gridSize);
+	}
+
+	targets = std::vector<location_t>(city_coordinates);
+
+	generate_terrain_areas(wood_coordinates, graph, Node::NodeType::WOOD, 4);
+	generate_terrain_areas(water_coordinates, graph, Node::NodeType::WATER, 30);
 	generate_cities(city_coordinates, graph);
+	
 
 	//PRINT MAP
 
@@ -145,11 +234,27 @@ int main(int argc, char** argv)
 	{
 		for(int j = 0; j < gridSize; ++j)
 		{
-			if(graph[i][j]->Type() == 0)
+			if(graph[i][j]->Type() == 0 && graph[i][j]->Traversable())
 			{
 				std::clog << "o";
 			}
-			else if(graph[i][j]->Type() == 2)
+			else if(graph[i][j]->Type() == 0 && !graph[i][j]->Traversable())
+			{
+				std::clog << "@";
+			}
+			else if(graph[i][j]->Type() == Node::NodeType::ROAD)
+			{
+				std::clog << ".";
+			}
+			else if(graph[i][j]->Type() == Node::NodeType::WOOD)
+			{
+				std::clog << "W";
+			}
+			else if(graph[i][j]->Type() == Node::NodeType::WATER)
+			{
+				std::clog << "_";
+			}
+			else if(graph[i][j]->Type() == Node::NodeType::CITY)
 			{
 				std::clog << "X";
 			}
@@ -165,11 +270,13 @@ int main(int argc, char** argv)
 	traveler_count = travelersCount;
 
 	std::vector<unsigned int> target_index(travelersCount);
-	for(int i = 0; i < targetCount; ++i)
+	/*for(int i = 0; i < targetCount; ++i)
 	{
 		location_t loc(rand() % (gridSize-1) + 1, rand() % (gridSize-1) + 1);
 		targets.push_back(loc);
-	}
+	}*/
+
+	;
 
 
 	NodeCalculatorThread nct(travelersCount, &graph, gridSize);
