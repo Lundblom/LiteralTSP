@@ -3,7 +3,7 @@
 #include <iostream>
 
 sem_t pathfinding::NodeCalculatorThread::THREAD_SEM;
-bool pathfinding::NodeCalculatorThread::SIMULATION_MODE = 0;
+bool pathfinding::NodeCalculatorThread::SIMULATION_MODE = 1;
 
 
 

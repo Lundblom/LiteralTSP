@@ -13,9 +13,9 @@
 #include "PathStruct.h"
 #include "a_star.cpp"
 
-#define TRAVEL_COEFFICIENT 400
+#define TRAVEL_COEFFICIENT 100
 #define AMOUNT_OF_CITIES 5
-#define CITY_HEURISTIC_COEFFICIENT 20000
+#define CITY_HEURISTIC_COEFFICIENT 200000
 
 sem_t print_sem;
 sem_t traveler_count_sem;
@@ -34,7 +34,7 @@ void travel_handler(Traveler* t, NodeCalculatorThread* nct, std::vector<location
 		int distance = t->NextDistance();
 		if(NodeCalculatorThread::SIMULATION_MODE)
 		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(distance * TRAVEL_COEFFICIENT));
+			std::this_thread::sleep_for(std::chrono::microseconds(distance * TRAVEL_COEFFICIENT));
 		}
 		t->IncrementTravelTime( distance );
 		t->Travel();
@@ -86,9 +86,10 @@ void generate_cities(std::vector<location_t>& city_coordinates, std::vector<std:
 			Node* n = road.top();
 			road.pop();
 			n->makeRoad();
-			std::clog << n->Position().first << ", " << n->Position().second << std::endl;
 		}
+		std::clog << "Created a road." << std::endl;
 	}
+	std::clog << "Done with roads" << std::endl;
 }
 
 int main(int argc, char** argv)
