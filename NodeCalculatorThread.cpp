@@ -56,6 +56,7 @@ void NodeCalculatorThread::work_loop()
 
 				double time = (*it)->work();
 				estimatedWorkTime = (time + estimatedWorkTime) / 2;
+				std::clog << "estimatedWorkTime is now " << estimatedWorkTime << std::endl;
 				if((*it)->complete())
 				{
 					std::stack<Node*> s;
@@ -72,6 +73,10 @@ void NodeCalculatorThread::work_loop()
 					(*it) = NULL;
 
 					sem_post(&NodeCalculatorThread::THREAD_SEM);
+				}
+				else
+				{
+					std::clog << "Traveler is not done yet." << std::endl;
 				}
 			}
 		}

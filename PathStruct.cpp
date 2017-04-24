@@ -50,6 +50,8 @@ PathStruct::PathStruct(int gridSize, std::pair<int, int> start, std::pair<int, i
 
 	t->InitiatePathCalculation();
 
+	std::clog << "Created struct with goal (" << end.first << ", " << end.second << ")" << std::endl;
+
 	distance[start.first][start.second] = 0;
 	std::pair<Node*, int> startNode((*graph)[start.first][start.second], 0);
 	queue.push(startNode);
@@ -129,6 +131,7 @@ double PathStruct::work()
 		//Checks if we are done
 		if(u->Position().first == end.first && u->Position().second == end.second)
 		{
+			std::clog << "We are finished! reached (" << end.first << ", " << end.second << ")" << std::endl;
 			_complete = true;
 			break;
 		}
@@ -138,7 +141,7 @@ double PathStruct::work()
 			int x;
 			int y;  
 
-			int lengthMultiplier = 1;
+			double lengthMultiplier = 1;
 
 			if(i < locations.size())
 			{
@@ -183,16 +186,12 @@ double PathStruct::work()
 				//std::cout << "Pushing (" << x << ", " << y << ") to stack." << std::endl;
 			}
 		}
-
-		for(int i = 0; i < diagonal_locations.size(); ++i)
-		{
-
-		}
 	}
 
 	double wall1 = get_wall_time();
 	traveler->IncrementComputationTime( (wall1 - wall0) );
 
+	std::clog << "Returning..." << std::endl;
 	return (wall1 - wall0);
 } 
 

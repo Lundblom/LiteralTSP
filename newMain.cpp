@@ -13,10 +13,11 @@
 #include "Traveler.h"
 #include "NodeCalculatorThread.h"
 #include "PathStruct.h"
+
 #include "a_star.cpp"
 
 #define TRAVEL_COEFFICIENT 100
-#define AMOUNT_OF_CITIES 1488
+#define AMOUNT_OF_CITIES 10
 #define AMOUNT_OF_WOODS 5
 #define AMOUNT_OF_WATER 1
 #define CITY_HEURISTIC_COEFFICIENT 200000
@@ -85,10 +86,6 @@ void generate_cities(std::vector<location_t>& city_coordinates, std::vector<std:
 		location_t secondLocation = city_coordinates[secondIndex];
 		g[secondLocation.first][secondLocation.second]->makeCity();
 
-		std::clog << "Starting astar" << std::endl;
-		std::clog << "Start is x: " << firstLocation.first << " y: " << firstLocation.second << std::endl;
-		std::clog << "end is x: " << secondLocation.first << " y: " << secondLocation.second << std::endl;
-		
 		std::stack<Node*> road = a_star(g, firstLocation, secondLocation, CITY_HEURISTIC_COEFFICIENT, true);
 
 
@@ -98,9 +95,7 @@ void generate_cities(std::vector<location_t>& city_coordinates, std::vector<std:
 			road.pop();
 			n->makeRoad();
 		}
-		std::clog << "Created a road." << std::endl;
 	}
-	std::clog << "Done with roads" << std::endl;
 }
 
 //Probability function for terrain is
@@ -218,7 +213,12 @@ int main(int argc, char** argv)
 	std::vector<location_t> water_coordinates(AMOUNT_OF_WATER);
 	for(int i = 0; i < AMOUNT_OF_WATER; ++i)
 	{
-		water_coordinates[i] = location_t(rand() % gridSize, rand() % gridSize);
+		do
+		{
+			water_coordinates[i] = location_t(rand() % gridSize, rand() % gridSize);
+		}
+		while(graph[water_coordinates[i].first][water_coordinates[i].second]->Type()
+			 == Node::NodeType::WATER);
 	}
 
 	targets = std::vector<location_t>(city_coordinates);
@@ -265,18 +265,10 @@ int main(int argc, char** argv)
 
 
 	int travelersCount = atoi(argv[1]);
-	int targetCount = atoi(argv[2]);
 
 	traveler_count = travelersCount;
 
 	std::vector<unsigned int> target_index(travelersCount);
-	/*for(int i = 0; i < targetCount; ++i)
-	{
-		location_t loc(rand() % (gridSize-1) + 1, rand() % (gridSize-1) + 1);
-		targets.push_back(loc);
-	}*/
-
-	;
 
 
 	NodeCalculatorThread nct(travelersCount, &graph, gridSize);
@@ -299,7 +291,6 @@ int main(int argc, char** argv)
 	}
 
 	nct.start();
-	//travelVisualiser.start();
 
 	while(true)
 	{
@@ -312,8 +303,6 @@ int main(int argc, char** argv)
 				{
 					travelers[i]->travellingThread->join();
 				}
-				
-				//delete travelers[i];
 			}
 			break;
 		}

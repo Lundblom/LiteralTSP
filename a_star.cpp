@@ -17,7 +17,7 @@ namespace pathfinding
 	static const std::vector<std::pair<int, int> >locations = {{0,-1}, {0, 1}, {-1, 0}, {1, 0}};
 	static const std::vector<std::pair<int, int> > diagonal_locations = {{-1, 1}, {1, 1}, {-1, -1}, {1, -1}};
 
-	std::stack<Node*> a_star(std::vector<std::vector<Node*> >& g, std::pair<int, int> start, std::pair<int, int> end, double heuristic_coefficient, bool ignore_terrain)
+	std::stack<Node*> a_star(std::vector<std::vector<Node*> >& g, std::pair<int, int> start, std::pair<int, int> end, double heuristic_coefficient, bool road_generate)
 	{
 		std::clog << "In astar\n"; 
 		std::vector<std::vector<int> > distance(g.size(), std::vector<int>(g.size(), ASTAR_PATH_INFINITY));
@@ -80,7 +80,7 @@ namespace pathfinding
 				int x;
 				int y;  
 
-				int lengthMultiplier = 1;
+				double lengthMultiplier = 1;
 
 				if(i < locations.size())
 				{
@@ -101,15 +101,33 @@ namespace pathfinding
 				}
 
 				Node* v = g[x][y];
-				if(!v->Traversable() && !ignore_terrain)
+				if(!v->Traversable() && !road_generate)
 				{
 					continue;
 				}
 
 				int l = v->Length();
-				if(ignore_terrain)
+				if(road_generate)
 				{
-					l = 30;
+					if(l == 0)
+					{
+						l = 30;
+					}
+					else
+					{
+						if(v->Type() == Node::NodeType::ROAD)
+						{
+							l *= 1;
+						}
+						else if(v->Type() == Node::NodeType::WOOD)
+						{
+							l *= 3;
+						}
+						else if(v->Type() == Node::NodeType::WATER)
+						{
+							l *= 2000000;
+						}
+					}
 				}
 
 				int a = distance[u->Position().first][u->Position().second] + l * lengthMultiplier + v->StraightDistance(end_node) * heuristic_coefficient;
@@ -142,7 +160,11 @@ namespace pathfinding
 			current = previous[current->Position().first][current->Position().second];
 			if(last == current)
 			{
+				Node* startNode = g[start.first][start.second];
+				Node* endNode = g[end.first][end.second];
 				std::cout << "Found infinite loop, breaking...\n";
+				std::cout << "Was going from " << (*startNode) << " to " << (*endNode) << std::endl;
+				std::cout << "Got stuck on " << (*current) << std::endl;
 				loop = true;
 				break;
 			}
