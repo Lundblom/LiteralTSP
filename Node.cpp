@@ -6,6 +6,10 @@ namespace pathfinding
 {
 
 	int Node::WOOD_LENGTH = 10;
+	int Node::WOOD_NODES = 0;
+	int Node::WATER_NODES = 0;
+	double Node::WOOD_THRESHOLD = 0.2;
+	double Node::WATER_THRESHOLD = 0.1;
 
 	Node::Node(int _length, std::pair<int, int> _position, bool _traversable) :
 			length(_length), position(_position), traversable(_traversable) 
@@ -24,7 +28,6 @@ namespace pathfinding
 	}
 
 	std::pair<int, int> Node::Position() const
-
 	{
 		return this->position;
 	}
@@ -58,12 +61,14 @@ namespace pathfinding
 	{
 		this->length = WOOD_LENGTH;
 		this->type = NodeType::WOOD;
+		++WOOD_NODES;
 	}
 
 	void Node::makeWater()
 	{
 		this->traversable = false;
 		this->type = NodeType::WATER;
+		++WATER_NODES;
 	}
 
 	Node::NodeType Node::Type() const
@@ -85,4 +90,14 @@ namespace pathfinding
 	    os << "Node x: " << l.first << " y: " << l.second << " length: " << n.Length() << " type: " << n.Type() << std::endl;
 	    return os;  
 	} 
+
+    int Node::TOTAL_WATER_NODES()
+	{
+		return Node::WATER_NODES;
+	}
+
+	int Node::TOTAL_WOOD_NODES()
+	{
+		return Node::WOOD_NODES;
+	}
 }

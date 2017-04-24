@@ -8,8 +8,6 @@ namespace pathfinding
 
 	#define ROAD_COEFFICIENT 0.2
 
-	
-
 	class Node 
 	{
 	public:
@@ -23,16 +21,16 @@ namespace pathfinding
 			WATER
 		};
 	private:
-		
 		static int WOOD_LENGTH;
+		static int WOOD_NODES;
+		static int WATER_NODES;
+
 		int length;
 		location_t position;
 		bool traversable = true;
 		NodeType type = NodeType::NORMAL;
 
 	public:
-		
-
 		Node(int, std::pair<int, int>, bool);
 
 		int Length() const;
@@ -46,6 +44,12 @@ namespace pathfinding
 		void makeWood();
 		void makeWater();
 		void makeCity();
+
+		static double WOOD_THRESHOLD;
+		static double WATER_THRESHOLD;
+
+		static int TOTAL_WATER_NODES();
+		static int TOTAL_WOOD_NODES();
 
 		friend std::ostream& operator<< (std::ostream&, const Node&);
 	};
