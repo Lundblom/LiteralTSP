@@ -3,7 +3,7 @@
 #include <iostream>
 
 sem_t pathfinding::NodeCalculatorThread::THREAD_SEM;
-bool pathfinding::NodeCalculatorThread::SIMULATION_MODE = 0;
+bool pathfinding::NodeCalculatorThread::SIMULATION_MODE = 1;
 
 
 
@@ -53,19 +53,27 @@ void NodeCalculatorThread::work_loop()
 			}
 			else
 			{
-
 				double time = (*it)->work();
 				estimatedWorkTime = (time + estimatedWorkTime) / 2;
-				std::clog << "estimatedWorkTime is now " << estimatedWorkTime << std::endl;
 				if((*it)->complete())
 				{
 					std::stack<Node*> s;
 
 					Node* current = (*graph)[(*it)->get_end_x()][(*it)->get_end_y()];
+					Node* last = NULL;
 					while(current != NULL)
 					{
 						s.push(current);
+						Node* cacheN = current;
 						current = (*it)->get_previous(current->Position().first, current->Position().second);
+						if(last == current)
+						{
+							std::cout << "Found infinite loop, breaking...\n";
+							std::cout << "Got stuck on " << (*current) << std::endl;
+							exit(0);
+						}
+						last = cacheN;
+
 					}
 					(*it)->traveler->InitiateTravel(s);
 
@@ -73,10 +81,6 @@ void NodeCalculatorThread::work_loop()
 					(*it) = NULL;
 
 					sem_post(&NodeCalculatorThread::THREAD_SEM);
-				}
-				else
-				{
-					std::clog << "Traveler is not done yet." << std::endl;
 				}
 			}
 		}
@@ -88,6 +92,7 @@ void NodeCalculatorThread::assign_new_task(Traveler* t, std::pair<int, int> star
 {
 	PathStruct* ps = new PathStruct(gridSize, start, end, t, graph);
 	
+	//std::clog << "Watiting for task_sem" << std::endl;
 	sem_wait(&task_sem);
 	for(int i = 0; i < pathData.size(); ++i)
 	{
@@ -97,6 +102,7 @@ void NodeCalculatorThread::assign_new_task(Traveler* t, std::pair<int, int> star
 			break;
 		}
 	}
+	//std::clog << "Releasing task_sem" << std::endl;
 	sem_post(&task_sem);
 }
 

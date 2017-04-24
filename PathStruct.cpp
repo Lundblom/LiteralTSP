@@ -19,11 +19,13 @@ PathStruct::PathStruct(int gridSize, std::pair<int, int> start, std::pair<int, i
 {
 	std::vector<std::vector<int> > _distance(gridSize, std::vector<int>(gridSize, PATH_INFINITY));
 	std::vector<std::vector<Node*> > _previous(gridSize, std::vector<Node*>(gridSize, NULL));
+	std::vector<std::vector<bool> > _visited(gridSize, std::vector<bool>(gridSize, 0));
 
 	std::priority_queue< std::pair<Node*, int>, std::vector <std::pair<Node*, int> > , decltype(cmp) > _queue(cmp);
 
 	distance = _distance;
 	previous = _previous;
+	visited = _visited;
 	queue = _queue;
 
 	this->start = start;
@@ -50,7 +52,7 @@ PathStruct::PathStruct(int gridSize, std::pair<int, int> start, std::pair<int, i
 
 	t->InitiatePathCalculation();
 
-	std::clog << "Created struct with goal (" << end.first << ", " << end.second << ")" << std::endl;
+	//std::clog << "Created struct with goal (" << end.first << ", " << end.second << ")" << std::endl;
 
 	distance[start.first][start.second] = 0;
 	std::pair<Node*, int> startNode((*graph)[start.first][start.second], 0);
@@ -131,7 +133,6 @@ double PathStruct::work()
 		//Checks if we are done
 		if(u->Position().first == end.first && u->Position().second == end.second)
 		{
-			std::clog << "We are finished! reached (" << end.first << ", " << end.second << ")" << std::endl;
 			_complete = true;
 			break;
 		}
@@ -163,6 +164,12 @@ double PathStruct::work()
 				continue;
 			}
 
+			if(visited[x][y])
+			{
+				continue;
+			}
+			visited[x][y] = 1;
+
 			Node* v = (*graph)[x][y];
 			if(!v->Traversable())
 			{
@@ -171,7 +178,7 @@ double PathStruct::work()
 
 			//std::cout << "	on neighbour (" << x << ", " << y << ") " << std::endl;
 
-			int a = distance[u->Position().first][u->Position().second] + v->Length() * lengthMultiplier + v->StraightDistance(end_node) * HEURISTIC_COEFFICIENT * traveler->Id();
+			int a = distance[u->Position().first][u->Position().second] + v->Length() * lengthMultiplier + v->StraightDistance(end_node) * HEURISTIC_COEFFICIENT * (traveler->Id() + 1);
 			
 			//If this path is shorter than the one we are currently on
 			if(a < distance[x][y])
@@ -180,7 +187,7 @@ double PathStruct::work()
 				distance[x][y] = a;
 				//Update our path trace, set the node we came from
 				previous[x][y] = u;
-				//std::cout << "Set p[" << x << "][" << y << "] to  u = (" << u->Position().first << ", " << u->Position().second << ")" << std::endl;
+				//std::clog << "Set p[" << x << "][" << y << "] to  u = (" << u->Position().first << ", " << u->Position().second << ")" << std::endl;
 				//Push the new node with the new distance set
 				queue.push(std::make_pair(v, distance[x][y]));
 				//std::cout << "Pushing (" << x << ", " << y << ") to stack." << std::endl;
@@ -190,8 +197,6 @@ double PathStruct::work()
 
 	double wall1 = get_wall_time();
 	traveler->IncrementComputationTime( (wall1 - wall0) );
-
-	std::clog << "Returning..." << std::endl;
 	return (wall1 - wall0);
 } 
 

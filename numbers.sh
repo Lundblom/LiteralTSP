@@ -1,7 +1,7 @@
 #/bin/bash
 
-SIZE=10000
-SIDE=100
+SIZE=40000
+SIDE=200
 
 COUNTER=0
 

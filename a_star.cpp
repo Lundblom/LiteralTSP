@@ -19,7 +19,6 @@ namespace pathfinding
 
 	std::stack<Node*> a_star(std::vector<std::vector<Node*> >& g, std::pair<int, int> start, std::pair<int, int> end, double heuristic_coefficient, bool road_generate)
 	{
-		std::clog << "In astar\n"; 
 		std::vector<std::vector<int> > distance(g.size(), std::vector<int>(g.size(), ASTAR_PATH_INFINITY));
 		std::vector<std::vector<Node*> > previous(g.size(), std::vector<Node*>(g.size(), NULL));
 
@@ -38,7 +37,6 @@ namespace pathfinding
 		//The cmp lambda is used to sort the queue
 		std::priority_queue< std::pair<Node*, int>, std::vector <std::pair<Node*, int> > , decltype(cmp) > queue(cmp);
 
-		std::clog << "initializing queue\n";
 		//Queue init
 		for(int i = 0; i < g.size(); ++i)
 		{
@@ -125,7 +123,7 @@ namespace pathfinding
 						}
 						else if(v->Type() == Node::NodeType::WATER)
 						{
-							l *= 2000000;
+							l *= 200;
 						}
 					}
 				}
@@ -144,8 +142,6 @@ namespace pathfinding
 				}
 			}
 		}
-
-		std::cout << "Astar done, creating stack\n";
 
 		//Creates a stack with our path in it
 		//Stack is used for easy backtracking

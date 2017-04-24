@@ -19,6 +19,7 @@ namespace pathfinding
 	private:
 		std::vector<std::vector<int> > distance;
 		std::vector<std::vector<Node*> > previous;
+		std::vector<std::vector<bool> > visited;
 		std::function<bool(std::pair<Node*, int>, std::pair<Node*, int>)> cmp = [](std::pair<Node*, int> left, std::pair<Node*, int> right) { return left.second > right.second;};
 		std::priority_queue< std::pair<Node*, int>, std::vector <std::pair<Node*, int> > , decltype(cmp) > queue;
 

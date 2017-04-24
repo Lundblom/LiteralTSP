@@ -17,10 +17,10 @@
 #include "a_star.cpp"
 
 #define TRAVEL_COEFFICIENT 100
-#define AMOUNT_OF_CITIES 10
+#define AMOUNT_OF_CITIES 20
 #define AMOUNT_OF_WOODS 5
 #define AMOUNT_OF_WATER 1
-#define CITY_HEURISTIC_COEFFICIENT 200000
+#define CITY_HEURISTIC_COEFFICIENT 2000
 
 sem_t print_sem;
 sem_t traveler_count_sem;
@@ -45,7 +45,7 @@ void travel_handler(Traveler* t, NodeCalculatorThread* nct, std::vector<location
 		t->Travel();
 	}
 	sem_wait(&print_sem);
-	std::cerr << "traveler " << t->Id() << " ocmp t: " << t->ComputationTime() << 
+	std::cerr << "traveler " << t->Id() << " comp t: " << t->ComputationTime() << 
 	", travel t: " << t->TravelTime() << ", inspected: " << t->InspectedNodes() << ", visited: " << t->VisitedNodes() << std::endl;
 	sem_post(&print_sem);
 
@@ -277,7 +277,7 @@ int main(int argc, char** argv)
 
 	for(int i = 0; i < travelersCount; ++i)
 	{
-		travelers.push_back(new Traveler(std::make_pair(0,0), i ));
+		travelers.push_back(new Traveler(targets[0], i ));
 		target_index[i] = 0;
 	}
 
@@ -287,7 +287,13 @@ int main(int argc, char** argv)
 
 	for(int i = 0; i < travelersCount; ++i)
 	{
-		nct.assign_new_task(travelers[i], std::make_pair(0,0), std::make_pair(gridSize-1, gridSize-1));
+		Traveler* t = travelers[i];
+		++(target_index[i]);
+		if( target_index[i] < targets.size() )
+		{
+			nct.assign_new_task(t, t->Position(), targets[1]);
+		}
+		
 	}
 
 	nct.start();
