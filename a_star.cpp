@@ -56,7 +56,7 @@ namespace pathfinding
 
 		//Set distance of start to 0
 		distance[start.first][start.second] = 0;
-		std::cout << "start in a_star: " << (*g[start.first][start.second]);
+		std::clog << "start in a_star: " << (*g[start.first][start.second]);
 		std::pair<Node*, int> startNode(g[start.first][start.second], 0);
 		queue.push(startNode);
 

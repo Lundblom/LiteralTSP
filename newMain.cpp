@@ -17,7 +17,6 @@
 #include "a_star.cpp"
 
 #define TRAVEL_COEFFICIENT 100
-#define AMOUNT_OF_CITIES 2
 #define AMOUNT_OF_WOODS 5
 #define AMOUNT_OF_WATER 1
 #define CITY_HEURISTIC_COEFFICIENT 2000
@@ -211,6 +210,7 @@ int main(int argc, char** argv)
 	srand(time(0));
 
 	gridSize = atoi(argv[1]);
+	int cityCount = atoi(argv[3]);
 
 	GRIDSIZE = gridSize;
 
@@ -219,14 +219,12 @@ int main(int argc, char** argv)
 	generate_world(graph);
 
 	//GENERATE CITIES
-	std::vector<location_t> city_coordinates(AMOUNT_OF_CITIES);
-	/*for(int i = 0; i < AMOUNT_OF_CITIES; ++i)
+	std::vector<location_t> city_coordinates(cityCount);
+	for(int i = 0; i < cityCount; ++i)
 	{
 		city_coordinates[i] = location_t(rand() % gridSize, rand() % gridSize);
 		std::clog << "Created city at (" << city_coordinates[i].first << ", " << city_coordinates[i].second << ")" << std::endl;
-	}*/
-	city_coordinates[0] = location_t(0, 0);
-	city_coordinates[1] = location_t(gridSize - 1, gridSize - 1);
+	}
 
 	targets = std::vector<location_t>(city_coordinates);
 
@@ -253,30 +251,30 @@ int main(int argc, char** argv)
 		{
 			if(graph[i][j]->Type() == 0 && graph[i][j]->Traversable())
 			{
-				std::cout << "o";
+				std::clog << "o";
 			}
 			else if(graph[i][j]->Type() == 0 && !graph[i][j]->Traversable())
 			{
-				std::cout << "@";
+				std::clog << "@";
 			}
 			else if(graph[i][j]->Type() == Node::NodeType::ROAD)
 			{
-				std::cout << ".";
+				std::clog << ".";
 			}
 			else if(graph[i][j]->Type() == Node::NodeType::WOOD)
 			{
-				std::cout << "W";
+				std::clog << "W";
 			}
 			else if(graph[i][j]->Type() == Node::NodeType::WATER)
 			{
-				std::cout << "_";
+				std::clog << "_";
 			}
 			else if(graph[i][j]->Type() == Node::NodeType::CITY)
 			{
-				std::cout << "X";
+				std::clog << "X";
 			}
 		}
-		std::cout << std::endl;
+		std::clog << std::endl;
 	}
 
 	int travelersCount = atoi(argv[2]);

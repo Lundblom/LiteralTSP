@@ -178,7 +178,7 @@ double PathStruct::work()
 
 			//std::cout << "	on neighbour (" << x << ", " << y << ") " << std::endl;
 
-			int a = distance[u->Position().first][u->Position().second] + v->Length() * lengthMultiplier + v->StraightDistance(end_node) * HEURISTIC_COEFFICIENT * (traveler->Id() + 1);
+			int a = distance[u->Position().first][u->Position().second] + v->Length() * lengthMultiplier + v->StraightDistance(end_node) * HEURISTIC_COEFFICIENT * (traveler->Id());
 			
 			//If this path is shorter than the one we are currently on
 			if(a < distance[x][y])
