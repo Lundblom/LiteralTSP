@@ -17,7 +17,7 @@
 #include "a_star.cpp"
 
 #define TRAVEL_COEFFICIENT 100
-#define AMOUNT_OF_CITIES 20
+#define AMOUNT_OF_CITIES 2
 #define AMOUNT_OF_WOODS 5
 #define AMOUNT_OF_WATER 1
 #define CITY_HEURISTIC_COEFFICIENT 2000
@@ -87,6 +87,7 @@ void generate_world(std::vector<std::vector<Node*> >& g)
 
 void generate_cities(std::vector<location_t>& city_coordinates, std::vector<std::vector<Node*> >& g)
 {
+	std::chrono::time_point<std::chrono::system_clock> before = std::chrono::system_clock::now();
 	while(true)
 	{
 		int firstIndex = rand() % city_coordinates.size();
@@ -109,7 +110,11 @@ void generate_cities(std::vector<location_t>& city_coordinates, std::vector<std:
 			road.pop();
 			n->makeRoad();
 		}
+		std::clog << "Created road and city" << std::endl;
 	}
+	std::chrono::time_point<std::chrono::system_clock> after = std::chrono::system_clock::now();
+	auto difference = std::chrono::duration_cast<std::chrono::milliseconds>(after - before);
+	std::clog << "Elapsed time was " << difference.count() << std::endl;
 }
 
 //Probability function for terrain is
@@ -215,11 +220,13 @@ int main(int argc, char** argv)
 
 	//GENERATE CITIES
 	std::vector<location_t> city_coordinates(AMOUNT_OF_CITIES);
-	for(int i = 0; i < AMOUNT_OF_CITIES; ++i)
+	/*for(int i = 0; i < AMOUNT_OF_CITIES; ++i)
 	{
 		city_coordinates[i] = location_t(rand() % gridSize, rand() % gridSize);
 		std::clog << "Created city at (" << city_coordinates[i].first << ", " << city_coordinates[i].second << ")" << std::endl;
-	}
+	}*/
+	city_coordinates[0] = location_t(0, 0);
+	city_coordinates[1] = location_t(gridSize - 1, gridSize - 1);
 
 	targets = std::vector<location_t>(city_coordinates);
 
@@ -272,18 +279,14 @@ int main(int argc, char** argv)
 		std::cout << std::endl;
 	}
 
-
-
 	int travelersCount = atoi(argv[2]);
 
 	traveler_count = travelersCount;
 
 	std::vector<unsigned int> target_index(travelersCount);
 
-
 	NodeCalculatorThread nct(travelersCount, &graph, gridSize);
 	std::vector<Traveler*> travelers;
-	//TravelVisualiser travelVisualiser(gridSize, travelers, graph);
 
 	for(int i = 0; i < travelersCount; ++i)
 	{
@@ -303,7 +306,6 @@ int main(int argc, char** argv)
 		{
 			nct.assign_new_task(t, t->Position(), targets[1]);
 		}
-		
 	}
 
 	nct.start();
@@ -337,7 +339,6 @@ int main(int argc, char** argv)
 			}
 		}
 	}
-
 
 	std::cout << "# h\ttravel\tcomp\n";
 	//std::cout << "# id\tt*c\n";

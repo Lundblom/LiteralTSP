@@ -14,13 +14,14 @@ namespace pathfinding
 	#define SQUARE_ROOT_TWO 1.414213562373095048801688724209698078569671875376948073176
 
 	//All location offsets from the current node that we check
-	static const std::vector<std::pair<int, int> >locations = {{0,-1}, {0, 1}, {-1, 0}, {1, 0}};
+	static const std::vector<std::pair<int, int> > locations = {{0,-1}, {0, 1}, {-1, 0}, {1, 0}};
 	static const std::vector<std::pair<int, int> > diagonal_locations = {{-1, 1}, {1, 1}, {-1, -1}, {1, -1}};
 
 	std::stack<Node*> a_star(std::vector<std::vector<Node*> >& g, std::pair<int, int> start, std::pair<int, int> end, double heuristic_coefficient, bool road_generate)
 	{
 		std::vector<std::vector<int> > distance(g.size(), std::vector<int>(g.size(), ASTAR_PATH_INFINITY));
 		std::vector<std::vector<Node*> > previous(g.size(), std::vector<Node*>(g.size(), NULL));
+		std::vector<std::vector<bool> > visited(g.size(), std::vector<bool>(g.size(), 0));
 
 		Node* end_node = g[end.first][end.second];
 
@@ -98,6 +99,12 @@ namespace pathfinding
 					continue;
 				}
 
+				if(visited[x][y])
+				{
+					continue;
+				}
+				visited[x][y] = 1;
+
 				Node* v = g[x][y];
 				if(!v->Traversable() && !road_generate)
 				{
@@ -119,16 +126,21 @@ namespace pathfinding
 						}
 						else if(v->Type() == Node::NodeType::WOOD)
 						{
-							l *= 3;
+							l *= 5000;
 						}
 						else if(v->Type() == Node::NodeType::WATER)
 						{
-							l *= 200;
+							l *= 40000;
 						}
 					}
 				}
 
 				int a = distance[u->Position().first][u->Position().second] + l * lengthMultiplier + v->StraightDistance(end_node) * heuristic_coefficient;
+
+				/*std::clog << "a value: " << a << std::endl;
+				std::clog << "distance: " << distance[u->Position().first][u->Position().second] << std::endl;
+				std::clog << "l * lengthMultiplier: " << l * lengthMultiplier << std::endl;
+				std::clog << "StraightDistance: " << v->StraightDistance(end_node) * heuristic_coefficient << std::endl;*/
 				
 				//If this path is shorter than the one we are currently on
 				if(a < distance[x][y])
