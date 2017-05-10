@@ -10,7 +10,7 @@
 #include "Node.h"
 #include "Traveler.h"
 
-#define HEURISTIC_COEFFICIENT 1
+#define HEURISTIC_COEFFICIENT 0.2
 
 namespace pathfinding
 {

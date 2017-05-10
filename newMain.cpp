@@ -344,7 +344,7 @@ int main(int argc, char** argv)
 	{	
 		double gttt = travelers[i]->GetTotalTravelTime();
 		double gtct =  travelers[i]->GetTotalComputationTime();
-		std::cout << travelers[i]->Id() * HEURISTIC_COEFFICIENT << "\t" << gttt <<
+		std::cout << travelers[i]->Id() * 0.2 << "\t" << gttt <<
 		 "\t" << gtct << std::endl;
 		delete travelers[i];
 	}
